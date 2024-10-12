@@ -1,1 +1,15 @@
 streamlit
+streamlit-feedback
+langchain # new
+# langchain>=0.0.247 # worked
+# langchain==0.0.292
+langsmith
+# openai==0.28.1
+chromadb
+tiktoken
+pysqlite3-binary
+langchain-core
+langchain-community
+langchain-cerebras
+pypdf
+sentence-transformers
