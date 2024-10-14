@@ -13,3 +13,4 @@ langchain-community
 langchain-cerebras
 pypdf
 sentence-transformers
+langchain-huggingface

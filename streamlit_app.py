@@ -7,7 +7,8 @@ import os
 import streamlit as st
 from langchain.callbacks.tracers.langchain import wait_for_all_tracers
 from langchain.callbacks.tracers.run_collector import RunCollectorCallbackHandler
-from langchain.memory import ConversationBufferMemory, StreamlitChatMessageHistory
+from langchain_community.chat_message_histories import StreamlitChatMessageHistory
+from langchain.memory import ConversationBufferMemory
 from langchain_cerebras import ChatCerebras
 from langchain.schema.runnable import RunnableConfig
 from langsmith import Client
@@ -60,15 +61,14 @@ else:
         st.session_state["last_run"] = "some_initial_value"
 
     # System prompt setup
-    system_prompt = ""  # Add your system prompt here if needed
+    _DEFAULT_SYSTEM_PROMPT = ""
+    system_prompt = _DEFAULT_SYSTEM_PROMPT = ""
     system_prompt = system_prompt.strip().replace("{", "{{").replace("}", "}}")
 
+
     # Initialize memory
-    memory = ConversationBufferMemory(
-        chat_memory=StreamlitChatMessageHistory(key="langchain_messages"),
-        return_messages=True,
-        memory_key="chat_history",
-    )
+    memory = ConversationBufferMemory()
+    # memory = StreamlitChatMessageHistory(key="chat_history")
 
     # Initialize chain
     chain = initialize_chain(_llm=model, system_prompt=system_prompt, _memory=memory)
@@ -79,20 +79,10 @@ else:
         st.session_state.trace_link = None
         st.session_state.run_id = None
 
-    # Helper function to get OpenAI message type
-    def _get_openai_type(msg):
-        if msg.type == "human":
-            return "user"
-        if msg.type == "ai":
-            return "assistant"
-        if msg.type == "chat":
-            return msg.role
-        return msg.type
-
     # Display chat history
-    for msg in st.session_state.langchain_messages:
-        streamlit_type = _get_openai_type(msg)
-        avatar = "🤖" if streamlit_type == "assistant" else None
+    for msg in memory.messages:
+        streamlit_type = "human" if msg.type == "human" else "ai"
+        avatar = "🤖" if streamlit_type == "ai" else None
         with st.chat_message(streamlit_type, avatar=avatar):
             st.markdown(msg.content)
 
@@ -134,7 +124,7 @@ else:
                     message_placeholder = st.empty()
                     
                     # Use the generate_suggestions function
-                    suggestions = generate_suggestions(_llm=model, video_topic=video_topic_input, target_audience=target_audience_input, selling_point=selling_point_input, question=question_input)
+                    suggestions = generate_suggestions(qa=chain, video_topic=video_topic_input, target_audience=target_audience_input, selling_point=selling_point_input, question=question_input)
                     
                     message_placeholder.markdown(suggestions)
                     memory.save_context({"input": prompt}, {"output": suggestions})
